@@ -103,6 +103,7 @@
     border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 30px solid hsl(var(--foreground));
     filter: drop-shadow(0 2px 4px #0008); z-index: 2; }
   .result { min-height: 52px; font-size: clamp(22px, 4vw, 34px); font-weight: 700; letter-spacing: -.02em; text-align: center; }
+  .result small a { color: inherit; text-underline-offset: 3px; }
   .result small { display: block; font-size: 14px; font-weight: 400; color: hsl(var(--muted-foreground)); letter-spacing: 0; }
 
   /* Slot machine */
@@ -228,8 +229,12 @@
   <!-- IDEAS -->
   <section id="ideas" class="panel">
     <div class="card">
-      <div class="card-h"><h2>Project ideas</h2><p class="muted">One per line. Stuck or can't agree? Spin.</p></div>
+      <div class="card-h"><h2>Project ideas</h2><p class="muted">Built for the reBot arm in a 4-hour hack. One per line as <b>Level: Title — description</b>. Stuck or can't agree? Spin.</p></div>
       <div class="card-c">
+        <div style="margin-bottom:14px"><label class="l" for="ideaFilter">Difficulty on the wheel</label>
+          <select class="input" id="ideaFilter"><option value="">All levels</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+        <label class="check" style="margin:-4px 0 14px"><input type="checkbox" id="noGpu"> Only ideas that need no GPU</label>
+        <label class="check" style="margin:-4px 0 14px"><input type="checkbox" id="onlyComm"> Only builds with a community / source link</label>
         <textarea class="input" id="ideaList"></textarea>
         <label class="check"><input type="checkbox" id="removeIdea"> Remove idea after it's picked</label>
         <div class="row"><button class="btn secondary" id="ideaReset">Reset to defaults</button></div>
@@ -302,10 +307,38 @@ const COLORS = ['#f97316','#22d3ee','#a78bfa','#facc15','#34d399','#f472b6','#60
 const TEAM_WORDS = ['Gripper','Wrist','Elbow','Shoulder','Base','Servo','Torque','Actuator','Joint','Effector',
   'Kinematic','Pivot','Linkage','Encoder','Stepper','Axis','Payload','Harmonic','Gearbox','Reach'];
 const DEFAULT_IDEAS = [
-  'Pick-and-place sorter','Robot barista','Drawing / calligraphy arm','Chess-playing arm','Tic-tac-toe opponent',
-  'Cube-stacking tower','Hand-gesture mimic arm','Camera-tracking arm','Cable-driven soft arm','Desk lamp that follows you',
-  'Plant-watering arm','Music / drum-playing arm','Rubik\'s cube solver','Voice-controlled arm','Claw machine',
-  'Pour-over coffee arm','Mini 3D-printer arm','Joystick teleop arm','Cat toy entertainer','Surprise us (wildcard)'
+  // Format: "Level: Title — description". The wheel shows the title; the description shows on the result. Add [GPU] at the end if it needs one, and <https://link> at the very end for a source.
+  'Easy: Teleop Olympics — build a course (stack cups, ring toss, knock down pins) and race it with the leader arm; fastest clean run wins',
+  'Easy: Draw & Sign — clamp a marker in the gripper, teleop it to draw a logo, then replay your saved waypoints to redraw it',
+  'Easy: Waypoint Dance — script a joint-space choreography timed to a song; judges vote on style',
+  'Easy: Photo Booth Arm — arm holds a phone or camera and swings through preset poses for team photos',
+  'Easy: Block Sorter Replay — teleop one pick-and-place, save it, and loop it to move a pile of blocks into bins',
+  'Easy: Pointer Arm — arm points at labeled spots on a map or board using a few saved poses, triggered by keypress',
+  'Easy: Drum Machine — save a few poses so the arm taps pads or a keyboard in rhythm; sequence a beat from the keyboard',
+  'Medium: Phone Remote — a web page with sliders and buttons (Python server) lets anyone drive the arm from their phone',
+  'Medium: Vending Arm — pick an item on a simple menu and the arm fetches the right block from labeled slots and hands it over',
+  'Medium: ACT Cube-in-Box — record about 50 demos, train ACT (cloud or local GPU), and grab a cube into a box on its own [GPU]',
+  'Medium: Color Sorter — OpenCV finds colored blocks, a camera-to-table mapping drives IK to drop each in its bin',
+  'Medium: Tic-Tac-Toe Opponent — camera reads the board, minimax picks a move, the arm places the piece',
+  'Medium: Object Follower — visual servoing keeps the gripper pointed at a colored object you move around',
+  'Medium: Sketch Plotter — webcam photo to edge detection to pen strokes drawn on a flat board with IK',
+  'Medium: Teleop with a Twist — add a custom safety layer (joint limits, speed cap, "no-go zone") to the leader-follower setup and show it saves a fragile object',
+  'Medium: Hand-Guide Record & Replay — move the arm by hand, record the path, and replay it; inspired by the handheld reBot_Arm_HMI terminal <https://github.com/xiayip/reBot_Arm_HMI>',
+  'Medium: Web Teach Pendant — browser console with a 3D arm view to teach points and play them back; build on the RS digital twin and MuJoCo sim <https://github.com/Yang-Ci/ReBot_Arm_DigitalTwin_RS>',
+  'Medium: Print a Wrist Cam Mount — 3D-print the D405 wrist mount at FabHub and show an eye-in-hand view that centers on a target <https://github.com/bowenszhu/rebot-b601-rs-d405-wrist-mount/tree/v1.0.0>',
+  'Medium: Soft Finger Gripper — print fin-ray soft fingers and pick fragile things (chips, eggs, berries) without crushing them <https://github.com/StefanRohringer/Touch-Sensing-Fin-Ray-Gripper>',
+  'Hard: Phone Pose Teleop — move your phone and the gripper follows (relative pose mapping plus IK); a community build did this on the RS <https://github.com/ammarjmahmood/rebot-phone-teleop>',
+  'Hard: Talk to the Arm — say "pick up the red block" and a VLM plus IK plans the grasp; use a cloud LLM key instead of a GPU, or mock mode to prototype <https://github.com/TheMoonAstronaut/wrc>',
+  'Hard: YOLO + Depth Grasp — detect objects with YOLO on an RGB-D camera, calibrate hand-eye, and grasp them; follows Seeed\'s visual grasping demo <https://wiki.seeedstudio.com/rebot_arm_b601_dm_grasping_demo/>',
+  'Hard: AprilTag Picker — hand-eye calibrate a webcam with AprilTags, then pick any tagged cube anywhere on the table (CPU only)',
+  'Hard: Smooth Planner — use the kinematics solver to plan minimum-jerk paths that dodge obstacles you place on the table',
+  'Hard: Language-Commanded Arm — fine-tune SmolVLA (or Pi0.5 with LoRA) on 2 to 3 tasks you choose by typing a prompt [GPU]',
+  'Hard: Depth Grasper — RealSense D405 point cloud to grasp pose to IK, picking unseen objects with no learned policy',
+  'Hard: Digital Twin — mirror the real arm live in simulation (ROS2 or Isaac Sim) and drive the real one from the sim <https://github.com/Yang-Ci/ReBot_Arm_DigitalTwin_RS>',
+  'Hard: Chess Arm — camera tracks the board, an engine picks moves, the arm plays physical pieces',
+  'Hard: Retry-on-Fail Policy — ACT plus a vision success check so the arm notices a dropped cube and tries again [GPU]',
+  'Hard: Webcam Gesture Teleop — MediaPipe hand tracking drives the arm through IK, no leader arm needed',
+  'Wildcard: Surprise us — pick any task the arm can do in 4 hours and sell the demo'
 ];
 const $ = id => document.getElementById(id);
 const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
@@ -346,8 +379,8 @@ $('themeBtn').onclick = () => setTheme(!dk());
 
 /* ---------- Wheel (ideas) ---------- */
 class Wheel {
-  constructor(canvas) { this.c = canvas; this.ctx = canvas.getContext('2d'); this.items = []; this.angle = 0; this.busy = false; this.draw(); }
-  set(items) { this.items = items; this.draw(); }
+  constructor(canvas) { this.c = canvas; this.ctx = canvas.getContext('2d'); this.items = []; this.colors = null; this.angle = 0; this.busy = false; this.draw(); }
+  set(items, colors) { this.items = items; this.colors = colors || null; this.draw(); }
   draw() {
     const { ctx, c, items } = this, W = c.width, R = W / 2 - 14, cx = W / 2;
     ctx.clearRect(0, 0, W, W);
@@ -363,7 +396,7 @@ class Wheel {
     ctx.rotate(this.angle);
     items.forEach((t, i) => {
       ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, i * seg, (i + 1) * seg); ctx.closePath();
-      ctx.fillStyle = COLORS[i % COLORS.length]; ctx.fill();
+      ctx.fillStyle = (this.colors && this.colors[i]) || COLORS[i % COLORS.length]; ctx.fill();
       ctx.strokeStyle = dk() ? '#09090b' : '#fff'; ctx.lineWidth = 3; ctx.stroke();
       ctx.save(); ctx.rotate((i + .5) * seg); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
       ctx.fillStyle = '#111';
@@ -527,17 +560,34 @@ $('tsize').value = store.get('tsize', 4);
 
 /* ---------- Idea wheel ---------- */
 const wI = new Wheel($('wheelI'));
-$('ideaList').value = store.get('ideas', DEFAULT_IDEAS.join('\n'));
-const syncIdeas = () => { store.set('ideas', $('ideaList').value); wI.set(lines($('ideaList').value)); $('spinI').disabled = !wI.items.length; };
+const LEVEL_COLORS = { easy: '#34d399', medium: '#facc15', hard: '#fb7185', wildcard: '#a78bfa' };
+let ideaView = [];  // entries currently on the wheel
+$('ideaList').value = store.get('ideas4', DEFAULT_IDEAS.join('\n'));
+function parseIdea(full, idx) {
+  let url = ''; full = full.replace(/\s*<(https?:\/\/[^>\s]+)>\s*$/, (_, u) => { url = u; return ''; });
+  const gpu = /\[gpu\]/i.test(full); full = full.replace(/\s*\[gpu\]\s*/ig, ' ').trim();
+  const m = full.match(/^(easy|medium|hard|wildcard)\s*:\s*(.+)$/i), body = m ? m[2] : full;
+  const [title, ...rest] = body.split(/\s+[—–-]\s+/);
+  return { full, idx, gpu, url, level: m ? m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() : '', title: title.trim(), desc: rest.join(' — ').trim() };
+}
+const syncIdeas = () => {
+  store.set('ideas4', $('ideaList').value);
+  const f = $('ideaFilter').value;
+  ideaView = lines($('ideaList').value).map(parseIdea).filter(e => (!f || e.level === f) && !($('noGpu').checked && e.gpu) && !($('onlyComm').checked && !e.url));
+  wI.set(ideaView.map(e => e.title), ideaView.map(e => LEVEL_COLORS[e.level.toLowerCase()]));
+  $('spinI').disabled = !ideaView.length;
+};
 $('ideaList').addEventListener('input', syncIdeas);
+$('ideaFilter').onchange = $('noGpu').onchange = $('onlyComm').onchange = syncIdeas;
 $('ideaReset').onclick = () => { $('ideaList').value = DEFAULT_IDEAS.join('\n'); $('resultI').innerHTML = ''; syncIdeas(); };
 $('spinI').onclick = async () => {
   if (wI.busy) return;
   $('spinI').disabled = true; $('resultI').innerHTML = '';
-  const idx = await wI.spin(), pick = wI.items[idx];
-  $('resultI').innerHTML = esc(pick); confetti();
+  const e = ideaView[await wI.spin()];
+  $('resultI').innerHTML = `${e.level ? `<span class="badge" style="background:${LEVEL_COLORS[e.level.toLowerCase()]};color:#111;border:0">${esc(e.level)}</span> ` : ''}${esc(e.title)}${e.gpu ? ' <span class="badge">GPU</span>' : ''}${e.desc || e.url ? `<small>${esc(e.desc)}${e.url ? ` <br><a href="${esc(e.url)}" target="_blank" rel="noopener">See the community build / source ↗</a>` : ''}</small>` : ''}`;
+  confetti();
   if ($('removeIdea').checked) {
-    const l = lines($('ideaList').value); l.splice(idx, 1); $('ideaList').value = l.join('\n');
+    const l = lines($('ideaList').value); l.splice(e.idx, 1); $('ideaList').value = l.join('\n');
   }
   syncIdeas();
 };
