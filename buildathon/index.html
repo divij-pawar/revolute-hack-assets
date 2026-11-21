@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revolute Buildathon</title>
+<style>
+  /* shadcn/ui "zinc" theme tokens (dark) */
+  :root {
+    --background: 0 0% 100%; --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%; --card-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%; --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%; --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%; --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%; --accent-foreground: 240 5.9% 10%;
+    --border: 240 5.9% 90%; --input: 240 5.9% 90%; --ring: 240 5.9% 10%;
+    --radius: .5rem; --warn: 32 95% 44%; --danger: 0 84% 52%; --shade: #0002;
+  }
+  .dark {
+    --background: 240 10% 3.9%; --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%; --card-foreground: 0 0% 98%;
+    --primary: 0 0% 98%; --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%; --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%; --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%; --accent-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%; --input: 240 3.7% 15.9%; --ring: 240 4.9% 83.9%;
+    --warn: 38 92% 50%; --danger: 0 60% 60%; --shade: #000;
+  }
+  * { box-sizing: border-box; border-color: hsl(var(--border)); }
+  body { margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); min-height: 100vh;
+    font: 14px/1.5 ui-sans-serif, "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, p { margin: 0; }
+  .muted { color: hsl(var(--muted-foreground)); }
+
+  /* Header */
+  .top { border-bottom: 1px solid hsl(var(--border)); }
+  .top-in { max-width: 1152px; margin: 0 auto; padding: 20px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand h1 { font-size: clamp(30px, 6vw, 52px); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
+  .brand p { font-size: 14px; margin-top: 4px; }
+  .brand a { color: inherit; text-underline-offset: 3px; }
+  .brand a:hover { color: hsl(var(--foreground)); }
+
+  /* Button */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; height: 36px; padding: 0 16px;
+    border-radius: calc(var(--radius) - 2px); font: inherit; font-weight: 500; font-size: 14px; cursor: pointer; border: 1px solid transparent;
+    background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); transition: background .15s, opacity .15s; }
+  .btn:hover { background: hsl(var(--primary) / .9); }
+  .btn.secondary { background: hsl(var(--secondary)); color: hsl(var(--secondary-foreground)); }
+  .btn.secondary:hover { background: hsl(var(--secondary) / .8); }
+  .btn.outline { background: transparent; color: hsl(var(--foreground)); border-color: hsl(var(--input)); }
+  .btn.outline:hover { background: hsl(var(--accent)); }
+  .btn.ghost { background: transparent; color: hsl(var(--foreground)); }
+  .btn.ghost:hover { background: hsl(var(--accent)); }
+  .btn.icon { width: 36px; padding: 0; }
+  .btn.lg { height: 44px; padding: 0 32px; font-size: 16px; border-radius: var(--radius); }
+  .btn:disabled { opacity: .5; pointer-events: none; }
+  .btn:focus-visible, .input:focus-visible, .tab:focus-visible, select:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+  svg.i { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Tabs */
+  main { max-width: 1152px; margin: 0 auto; padding: 24px 16px 56px; }
+  .tabs { display: inline-flex; height: 40px; align-items: center; padding: 4px; border-radius: var(--radius);
+    background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); margin-bottom: 20px; }
+  .tab { border: 0; background: transparent; color: inherit; font: inherit; font-weight: 500; padding: 6px 14px; height: 32px;
+    border-radius: calc(var(--radius) - 2px); cursor: pointer; }
+  .tab { white-space: nowrap; }
+  @media (max-width: 480px) { .tab { padding: 6px 9px; font-size: 13px; } .tm-controls .btn.lg { padding: 0 16px; } }
+  .tab.on { background: hsl(var(--background)); color: hsl(var(--foreground)); box-shadow: 0 1px 2px #0006; }
+  .panel { display: none; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+  .panel.on { display: grid; }
+  .panel.one.on { grid-template-columns: 1fr; }
+  @media (max-width: 860px) { .panel.on { grid-template-columns: 1fr; } }
+
+  /* Card */
+  .card { border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) + 4px); background: hsl(var(--card)); color: hsl(var(--card-foreground));
+    box-shadow: 0 1px 2px #0004; }
+  .card-h { padding: 22px 22px 0; }
+  .card-h h2 { font-size: 18px; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
+  .card-h p { font-size: 14px; margin-top: 6px; }
+  .card-c { padding: 22px; }
+  .card-h + .card-c { padding-top: 16px; }
+
+  /* Form */
+  label.l { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  .input, textarea.input, select.input { width: 100%; height: 36px; border-radius: calc(var(--radius) - 2px); border: 1px solid hsl(var(--input));
+    background: transparent; color: inherit; padding: 4px 12px; font: inherit; }
+  textarea.input { height: auto; min-height: 220px; padding: 8px 12px; resize: vertical; }
+  select.input option { background: hsl(var(--background)); }
+  .input::placeholder { color: hsl(var(--muted-foreground)); }
+  .field { margin-top: 16px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 14px; }
+  .check input { width: 16px; height: 16px; accent-color: hsl(var(--primary)); }
+  .hint { font-size: 12.5px; color: hsl(var(--muted-foreground)); margin-top: 8px; }
+  .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600;
+    border: 1px solid hsl(var(--border)); background: hsl(var(--secondary)); }
+
+  /* Stage */
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 16px; min-width: 0; }
+  .wheelwrap { position: relative; width: min(100%, 520px); aspect-ratio: 1; }
+  canvas { width: 100%; height: 100%; display: block; }
+  .pointer { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0;
+    border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 30px solid hsl(var(--foreground));
+    filter: drop-shadow(0 2px 4px #0008); z-index: 2; }
+  .result { min-height: 52px; font-size: clamp(22px, 4vw, 34px); font-weight: 700; letter-spacing: -.02em; text-align: center; }
+  .result small { display: block; font-size: 14px; font-weight: 400; color: hsl(var(--muted-foreground)); letter-spacing: 0; }
+
+  /* Slot machine */
+  .slot { width: 100%; padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .teamreel { width: min(100%, 420px); }
+  .builders { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; width: 100%; }
+  .reel.sm .strip div { font-size: clamp(16px, 2.4vw, 22px); }
+  .tname { flex: 1; min-width: 0; background: transparent; border: 1px solid transparent; border-radius: 4px; color: inherit; font: inherit; font-weight: 600; padding: 1px 4px; margin: -1px -4px; }
+  .tname:hover, .tname:focus { border-color: hsl(var(--input)); outline: none; }
+  .team li { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .team li .x { background: transparent; border: 0; color: hsl(var(--muted-foreground)); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; border-radius: 4px; }
+  .team li .x:hover { color: hsl(var(--foreground)); background: hsl(var(--accent)); }
+  .lbl { text-align: center; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: hsl(var(--muted-foreground)); margin-bottom: 6px; font-weight: 500; }
+  .reel { height: 96px; overflow: hidden; border-radius: var(--radius); background: hsl(var(--background)); border: 1px solid hsl(var(--input)); position: relative;
+    box-shadow: inset 0 14px 14px -10px var(--shade), inset 0 -14px 14px -10px var(--shade); }
+  .reel::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed hsl(var(--muted-foreground) / .4); pointer-events: none; }
+  .strip div { height: 96px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 8px;
+    font-size: clamp(20px, 3.4vw, 30px); font-weight: 700; letter-spacing: -.02em; line-height: 1.1; overflow: hidden; }
+  .reel.going .strip div { filter: blur(1.2px); }
+
+  /* Teams */
+  .teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; width: 100%; }
+  .team { padding: 14px; transition: box-shadow .3s; }
+  .team h3 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .team h3 i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); display: inline-block; }
+  .team h3 > span { margin-left: auto; font-weight: 400; color: hsl(var(--muted-foreground)); }
+  .team ul { margin: 8px 0 0; padding: 0; list-style: none; }
+  .team li { padding: 3px 0; border-top: 1px solid hsl(var(--border)); animation: pop .35s ease; }
+  .team.flash { animation: flash 1s ease; }
+  @keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes flash { 30% { box-shadow: 0 0 0 2px var(--c), 0 0 28px var(--c); } }
+
+  /* Timer */
+  .timercard { width: 100%; }
+  .timercard:fullscreen { background: hsl(var(--background)); display: flex; flex-direction: column; justify-content: center; border: 0; border-radius: 0; }
+  .tm-head { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding-top: 8px; }
+  .tm-team { font-size: clamp(24px, 4.5vw, 48px); font-weight: 700; letter-spacing: -.02em; }
+  .tm-members { font-size: 15px; }
+  .tm-phase { font-size: clamp(26px, 5.5vw, 56px); letter-spacing: .08em; text-transform: uppercase; font-weight: 800; padding: 6px 28px; border-radius: 999px; background: hsl(var(--secondary)); line-height: 1.15; }
+  .timercard:fullscreen .tm-phase { font-size: min(7vw, 9vh); }
+  .tm-clock { font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: -.04em; line-height: 1; text-align: center;
+    font-size: clamp(88px, 21vw, 300px); margin: 18px 0 10px; transition: color .3s; }
+  .timercard:fullscreen .tm-clock { font-size: min(34vw, 52vh); }
+  .tm-clock.warn { color: hsl(var(--warn)); }
+  .tm-clock.danger { color: hsl(var(--danger)); animation: blink 1s steps(2) infinite; }
+  .tm-clock.done { color: hsl(var(--muted-foreground)); }
+  @keyframes blink { 50% { opacity: .55; } }
+  .bar { height: 8px; border-radius: 999px; background: hsl(var(--secondary)); overflow: hidden; max-width: 760px; margin: 0 auto; }
+  .bar > div { height: 100%; width: 100%; background: hsl(var(--primary)); transform-origin: left; }
+  .tm-controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 24px; }
+  .tm-pick { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 18px; }
+  .tm-pick select { width: auto; min-width: 200px; }
+  .timercard:fullscreen .tm-pick { opacity: .75; }
+
+  /* Dialog (settings) */
+  dialog { border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) + 4px); background: hsl(var(--background)); color: hsl(var(--foreground));
+    padding: 0; width: min(440px, calc(100vw - 32px)); box-shadow: 0 20px 60px #000a; }
+  dialog::backdrop { background: #000a; backdrop-filter: blur(2px); }
+  .d-h { padding: 22px 22px 0; }
+  .d-h h2 { font-size: 18px; font-weight: 600; }
+  .d-c { padding: 8px 22px 6px; }
+  .d-f { padding: 16px 22px 22px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .grp { margin-top: 18px; }
+  .grp > b { display: block; font-size: 14px; margin-bottom: 8px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pair label { display: block; font-size: 12px; margin-bottom: 4px; color: hsl(var(--muted-foreground)); }
+  footer { text-align: center; padding: 0 0 32px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="top"><div class="top-in">
+  <div class="brand">
+    <h1>Revolute Spinner</h1>
+    <p class="muted">Robot Arm Buildathon · FabHub Kendall · Nov 21, 2026 · <a href="https://revolutehack.com/" target="_blank" rel="noopener">revolutehack.com</a></p>
+  </div>
+  <div style="display:flex;gap:8px">
+  <button class="btn outline icon" id="themeBtn" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+    <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+  </button>
+  <button class="btn outline icon" id="openSettings" aria-label="Settings" title="Settings">
+    <svg class="i" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
+  </div>
+</div></div>
+
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-tab="teams" role="tab">Team Picker</button>
+    <button class="tab" data-tab="ideas" role="tab">Idea Wheel</button>
+    <button class="tab" data-tab="timer" role="tab">Presentations</button>
+  </div>
+
+  <!-- TEAMS -->
+  <section id="teams" class="panel on">
+    <div class="card">
+      <div class="card-h"><h2>Participants</h2><p class="muted">One name per line. Already on a team? Write <b>Name: Team name</b>.</p></div>
+      <div class="card-c">
+        <textarea class="input" id="names" placeholder="Ada Lovelace&#10;Grace Hopper&#10;Linus Torvalds: Team Rocket"></textarea>
+        <div class="field">
+          <label class="l" for="tsize">Builders per team</label>
+          <input class="input" type="number" id="tsize" min="1" max="20" value="4" style="width:100px">
+          <p class="hint" id="count"></p>
+        </div>
+        <div class="row">
+          <button class="btn secondary" id="load">Load names / reset</button>
+          <button class="btn outline" id="instant">Instant shuffle</button>
+        </div>
+        <p class="hint">Each pull picks a team and fills it completely. People already on a team count toward its limit. Rename teams right on their cards, and use × to send someone back to the pool. Saved in this browser.</p>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="card slot">
+        <div class="teamreel"><div class="lbl">Team</div><div class="reel"><div class="strip" id="stripT"></div></div></div>
+        <div class="lbl">Builders</div>
+        <div class="builders" id="builders"></div>
+        <button class="btn lg" id="spinT">Pull</button>
+        <div class="result" id="resultT"></div>
+      </div>
+      <div class="teams" id="teamGrid"></div>
+    </div>
+  </section>
+
+  <!-- IDEAS -->
+  <section id="ideas" class="panel">
+    <div class="card">
+      <div class="card-h"><h2>Project ideas</h2><p class="muted">One per line. Stuck or can't agree? Spin.</p></div>
+      <div class="card-c">
+        <textarea class="input" id="ideaList"></textarea>
+        <label class="check"><input type="checkbox" id="removeIdea"> Remove idea after it's picked</label>
+        <div class="row"><button class="btn secondary" id="ideaReset">Reset to defaults</button></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="wheelwrap"><div class="pointer"></div><canvas id="wheelI" width="1040" height="1040"></canvas></div>
+      <button class="btn lg" id="spinI">Spin</button>
+      <div class="result" id="resultI"></div>
+    </div>
+  </section>
+
+  <!-- TIMER -->
+  <section id="timer" class="panel one">
+    <div class="card timercard" id="timercard">
+      <div class="card-c">
+        <div class="tm-head">
+          <span class="tm-phase" id="tmPhase">Presentation</span>
+          <div class="tm-team" id="tmTeam"></div>
+          <div class="tm-members muted" id="tmMembers"></div>
+        </div>
+        <div class="tm-clock" id="tmClock">05:00</div>
+        <div class="bar"><div id="tmBar"></div></div>
+        <div class="tm-controls">
+          <button class="btn lg" id="tmStart">Start</button>
+          <button class="btn lg outline" id="tmReset">Reset</button>
+          <button class="btn lg outline" id="tmPlus">+1 min</button>
+          <button class="btn lg outline" id="tmSkip">Skip</button>
+          <button class="btn lg ghost" id="tmFull">Fullscreen</button>
+        </div>
+        <div class="tm-pick">
+          <button class="btn outline icon" id="tmPrev" aria-label="Previous team">&larr;</button>
+          <select class="input" id="tmSelect"></select>
+          <button class="btn outline icon" id="tmNext" aria-label="Next team">&rarr;</button>
+        </div>
+        <p class="hint" style="text-align:center">Space: start / pause · &rarr;: next team. Times are in Settings (top right).</p>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="muted">Built for the Revolute hackathon crew. Good luck, builders.</footer>
+
+<!-- Settings -->
+<dialog id="settings">
+  <div class="d-h"><h2>Settings</h2><p class="muted">Presentation timer. Saved in this browser.</p></div>
+  <div class="d-c">
+    <div class="grp"><b>Presentation time</b>
+      <div class="pair">
+        <div><label for="pm">Minutes</label><input class="input" type="number" id="pm" min="0" max="120"></div>
+        <div><label for="ps">Seconds</label><input class="input" type="number" id="ps" min="0" max="59"></div>
+      </div>
+    </div>
+    <div class="grp"><b>Questions time</b>
+      <div class="pair">
+        <div><label for="qm">Minutes</label><input class="input" type="number" id="qm" min="0" max="120"></div>
+        <div><label for="qs">Seconds</label><input class="input" type="number" id="qs" min="0" max="59"></div>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="auto"> Start questions automatically after the presentation</label>
+    <label class="check"><input type="checkbox" id="sound"> Play a sound when time is up</label>
+  </div>
+  <div class="d-f">
+    <button class="btn outline" id="setReset">Reset defaults</button>
+    <button class="btn" id="setSave">Save</button>
+  </div>
+</dialog>
+
+<script>
+const COLORS = ['#f97316','#22d3ee','#a78bfa','#facc15','#34d399','#f472b6','#60a5fa','#fb7185','#a3e635','#f59e0b'];
+const TEAM_WORDS = ['Gripper','Wrist','Elbow','Shoulder','Base','Servo','Torque','Actuator','Joint','Effector',
+  'Kinematic','Pivot','Linkage','Encoder','Stepper','Axis','Payload','Harmonic','Gearbox','Reach'];
+const DEFAULT_IDEAS = [
+  'Pick-and-place sorter','Robot barista','Drawing / calligraphy arm','Chess-playing arm','Tic-tac-toe opponent',
+  'Cube-stacking tower','Hand-gesture mimic arm','Camera-tracking arm','Cable-driven soft arm','Desk lamp that follows you',
+  'Plant-watering arm','Music / drum-playing arm','Rubik\'s cube solver','Voice-controlled arm','Claw machine',
+  'Pour-over coffee arm','Mini 3D-printer arm','Joystick teleop arm','Cat toy entertainer','Surprise us (wildcard)'
+];
+const $ = id => document.getElementById(id);
+const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const lines = v => v.split('\n').map(s => s.trim()).filter(Boolean);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.panel').forEach(s => s.classList.toggle('on', s.id === b.dataset.tab));
+});
+
+/* ---------- Confetti ---------- */
+function confetti() {
+  for (let i = 0; i < 40; i++) {
+    const d = document.createElement('i');
+    const x = (Math.random() - .5) * 500, y = -Math.random() * 300 - 40, r = Math.random() * 720;
+    Object.assign(d.style, { position: 'fixed', left: '50%', top: '45%', width: '9px', height: '14px', zIndex: 99,
+      background: COLORS[i % COLORS.length], pointerEvents: 'none' });
+    document.body.appendChild(d);
+    d.animate([{ transform: 'translate(0,0)', opacity: 1 },
+      { transform: `translate(${x}px,${y}px) rotate(${r}deg)`, opacity: 1, offset: .4 },
+      { transform: `translate(${x * 1.3}px,${y + 600}px) rotate(${r * 2}deg)`, opacity: 0 }],
+      { duration: 1600 + Math.random() * 600, easing: 'ease-out' }).onfinish = () => d.remove();
+  }
+}
+
+/* ---------- Theme ---------- */
+const dk = () => document.documentElement.classList.contains('dark');
+function setTheme(dark) {
+  document.documentElement.classList.toggle('dark', dark);
+  store.set('theme', dark ? 'dark' : 'light');
+  try { wI.draw(); } catch {}
+}
+setTheme(store.get('theme', 'dark') !== 'light');
+$('themeBtn').onclick = () => setTheme(!dk());
+
+/* ---------- Wheel (ideas) ---------- */
+class Wheel {
+  constructor(canvas) { this.c = canvas; this.ctx = canvas.getContext('2d'); this.items = []; this.angle = 0; this.busy = false; this.draw(); }
+  set(items) { this.items = items; this.draw(); }
+  draw() {
+    const { ctx, c, items } = this, W = c.width, R = W / 2 - 14, cx = W / 2;
+    ctx.clearRect(0, 0, W, W);
+    ctx.save(); ctx.translate(cx, cx);
+    ctx.beginPath(); ctx.arc(0, 0, R + 10, 0, 7); ctx.fillStyle = dk() ? '#27272a' : '#d4d4d8'; ctx.fill();
+    const n = items.length;
+    if (!n) {
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, 7); ctx.fillStyle = dk() ? '#09090b' : '#fafafa'; ctx.fill();
+      ctx.fillStyle = '#71717a'; ctx.font = '600 38px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Add some entries', 0, 12); ctx.restore(); return;
+    }
+    const seg = 2 * Math.PI / n;
+    ctx.rotate(this.angle);
+    items.forEach((t, i) => {
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, i * seg, (i + 1) * seg); ctx.closePath();
+      ctx.fillStyle = COLORS[i % COLORS.length]; ctx.fill();
+      ctx.strokeStyle = dk() ? '#09090b' : '#fff'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.save(); ctx.rotate((i + .5) * seg); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#111';
+      const size = Math.max(16, Math.min(40, 700 / Math.max(n, 8)));
+      ctx.font = `700 ${size}px system-ui`;
+      let s = t; const max = R - 90;
+      while (ctx.measureText(s).width > max && s.length > 3) s = s.slice(0, -2);
+      if (s !== t) s = s.trimEnd() + '…';
+      ctx.fillText(s, R - 28, 0); ctx.restore();
+    });
+    ctx.rotate(-this.angle);
+    ctx.beginPath(); ctx.arc(0, 0, 44, 0, 7); ctx.fillStyle = dk() ? '#09090b' : '#18181b'; ctx.fill();
+    ctx.lineWidth = 6; ctx.strokeStyle = dk() ? '#fafafa' : '#fff'; ctx.stroke();
+    ctx.restore();
+  }
+  spin(duration = 5200) {
+    return new Promise(res => {
+      const n = this.items.length; if (!n || this.busy) return res(-1);
+      this.busy = true;
+      const seg = 2 * Math.PI / n, win = Math.floor(Math.random() * n);
+      const rel = (win + .1 + Math.random() * .8) * seg;
+      const TAU = 2 * Math.PI, mod = x => ((x % TAU) + TAU) % TAU;
+      const final = mod(-Math.PI / 2 - rel);
+      const delta = mod(final - this.angle) + TAU * (5 + Math.floor(Math.random() * 3));
+      const start = this.angle, t0 = performance.now();
+      const step = now => {
+        const p = Math.min(1, (now - t0) / duration), e = 1 - Math.pow(1 - p, 4);
+        this.angle = start + delta * e; this.draw();
+        if (p < 1) requestAnimationFrame(step); else { this.busy = false; res(win); }
+      };
+      requestAnimationFrame(step);
+    });
+  }
+}
+
+/* ---------- Team picker (slot machine: one pull fills one team) ---------- */
+const H = 96;
+const paint = (strip, items) => { strip.innerHTML = items.map(i => `<div style="color:${i.color}">${esc(i.text)}</div>`).join(''); };
+function rollReel(strip, choices, win, dur) {
+  const items = [{ text: '?', color: 'inherit' }];
+  for (let i = 0; i < 24; i++) items.push(choices[Math.floor(Math.random() * choices.length)]);
+  items.push(win);
+  strip.style.transition = 'none'; strip.style.transform = 'translateY(0)'; paint(strip, items);
+  strip.parentElement.classList.add('going'); strip.offsetHeight;
+  strip.style.transition = `transform ${dur}ms cubic-bezier(.12,.7,.18,1)`;
+  strip.style.transform = `translateY(${-(items.length - 1) * H}px)`;
+  return new Promise(r => setTimeout(() => { strip.parentElement.classList.remove('going'); r(); }, dur + 60));
+}
+function buildReels(n) {
+  $('builders').innerHTML = Array.from({ length: n }, () => '<div class="reel sm"><div class="strip"></div></div>').join('');
+  return [...$('builders').querySelectorAll('.strip')];
+}
+function idleReels() {
+  const txt = pool.length ? '?' : '—', n = Math.min(sizeVal(), 8);
+  const t = $('stripT'); t.style.transition = 'none'; t.style.transform = 'none'; paint(t, [{ text: txt, color: 'inherit' }]);
+  buildReels(n).forEach(s => paint(s, [{ text: txt, color: 'inherit' }]));
+}
+
+let pool = [], teams = [], teamNames = [];
+const sizeVal = () => Math.max(1, Math.min(20, Math.floor(+$('tsize').value) || 1));
+// "Ada" = unassigned; "Ada: Team Rocket" = already on that team
+function parseNames() {
+  const seen = new Set(), unassigned = [], named = new Map();
+  for (const line of lines($('names').value)) {
+    const m = line.match(/^(.+?)\s*:\s*(.+)$/), name = m ? m[1] : line;
+    if (seen.has(name.toLowerCase())) continue; seen.add(name.toLowerCase());
+    if (!m) { unassigned.push(name); continue; }
+    const key = m[2].toLowerCase();
+    if (!named.has(key)) named.set(key, { name: m[2], members: [] });
+    named.get(key).members.push(name);
+  }
+  return { unassigned, named: [...named.values()] };
+}
+function plan() {
+  const { unassigned, named } = parseNames(), size = sizeVal();
+  const open = named.reduce((s, t) => s + Math.max(0, size - t.members.length), 0);
+  const extra = Math.ceil(Math.max(0, unassigned.length - open) / size);
+  return { unassigned, named, size, k: named.length + extra, total: unassigned.length + named.reduce((s, t) => s + t.members.length, 0) };
+}
+function describe(p) {
+  if (!p.total) return 'Add names to get started.';
+  const pre = p.total - p.unassigned.length;
+  return `${p.total} people${pre ? ` (${pre} already on teams)` : ''} → ${p.k} team${p.k > 1 ? 's' : ''} of up to ${p.size}`;
+}
+function renderTeams() {
+  const size = sizeVal();
+  $('teamGrid').innerHTML = teams.map((t, i) =>
+    `<div class="card team" id="team${i}" style="--c:${COLORS[i % COLORS.length]}"><h3><i></i><input class="tname" data-i="${i}" value="${esc(teamNames[i])}" aria-label="Team name" maxlength="30"><span>${t.length}/${size}</span></h3>
+     <ul>${t.map((n, j) => `<li><span>${esc(n)}</span><button class="x" data-t="${i}" data-m="${j}" title="Remove from team" aria-label="Remove ${esc(n)}">×</button></li>`).join('')}</ul></div>`).join('');
+  refreshTimerTeams();
+}
+$('teamGrid').addEventListener('input', e => {
+  if (!e.target.classList.contains('tname')) return;
+  teamNames[+e.target.dataset.i] = e.target.value.trim() || 'Team ' + (+e.target.dataset.i + 1);
+  refreshTimerTeams();
+});
+$('teamGrid').addEventListener('click', e => {
+  const b = e.target.closest('.x'); if (!b || busyPull) return;
+  pool.push(teams[+b.dataset.t].splice(+b.dataset.m, 1)[0]);
+  $('spinT').disabled = false; $('resultT').innerHTML = ''; idleReels(); renderTeams();
+});
+function resetTeams() {
+  store.set('names', $('names').value); store.set('tsize', sizeVal());
+  const p = plan();
+  pool = [...p.unassigned];
+  teams = p.named.map(t => [...t.members]); teamNames = p.named.map(t => t.name);
+  const taken = new Set(teamNames.map(n => n.toLowerCase()));
+  const w = [...TEAM_WORDS].sort(() => Math.random() - .5);
+  for (let i = 0, n = 0; teams.length < p.k; i++) {
+    const nm = 'Team ' + w[i % w.length] + (i >= w.length ? ' ' + (Math.floor(i / w.length) + 1) : '');
+    if (taken.has(nm.toLowerCase())) continue;
+    teams.push([]); teamNames.push(nm);
+  }
+  $('count').textContent = describe(p);
+  $('resultT').innerHTML = ''; $('spinT').disabled = !pool.length;
+  idleReels(); renderTeams();
+}
+const roomIn = i => sizeVal() - teams[i].length;
+function pickTeam() {  // random team that still has room; add one if every team is full
+  const opts = teams.map((_, i) => i).filter(i => roomIn(i) > 0);
+  if (!opts.length) { teams.push([]); teamNames.push('Team ' + (teams.length)); return teams.length - 1; }
+  return opts[Math.floor(Math.random() * opts.length)];
+}
+function drawFromPool(n) { const out = []; while (out.length < n && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]); return out; }
+let busyPull = false;
+$('spinT').onclick = async () => {
+  if (busyPull || !pool.length) return;
+  busyPull = true; $('spinT').disabled = true; $('resultT').innerHTML = '';
+  const ti = pickTeam(), picks = drawFromPool(roomIn(ti));
+  const names = [...picks, ...pool];  // reel choices: the people being placed plus everyone still waiting
+  const choices = names.map(t => ({ text: t, color: 'inherit' }));
+  const tms = teamNames.map((t, i) => ({ text: t, color: COLORS[i % COLORS.length] }));
+  const strips = buildReels(picks.length);
+  await Promise.all([
+    rollReel($('stripT'), tms, tms[ti], 2400),
+    ...strips.map((s, i) => rollReel(s, choices, choices[i], 2900 + i * 500))]);
+  teams[ti].push(...picks);
+  $('resultT').innerHTML = `${esc(teamNames[ti])}<small>${picks.map(esc).join(', ')}</small>`;
+  renderTeams();
+  $('team' + ti).classList.add('flash');
+  confetti(); busyPull = false; $('spinT').disabled = !pool.length;
+  if (!pool.length) $('resultT').innerHTML += '<small>Everyone is assigned. Go build!</small>';
+};
+$('instant').onclick = () => {
+  resetTeams();
+  pool.sort(() => Math.random() - .5);
+  while (pool.length) {
+    const open = teams.map((_, i) => i).filter(i => roomIn(i) > 0);
+    const min = Math.min(...open.map(i => teams[i].length));
+    const opts = open.filter(i => teams[i].length === min);
+    teams[opts[Math.floor(Math.random() * opts.length)]].push(pool.pop());
+  }
+  idleReels(); renderTeams(); $('spinT').disabled = true;
+  $('resultT').innerHTML = 'Teams set!<small>Go build!</small>';
+};
+$('load').onclick = resetTeams;
+$('tsize').onchange = resetTeams;
+$('names').addEventListener('input', () => { store.set('names', $('names').value); $('count').textContent = describe(plan()) + ' (press Load to apply)'; });
+$('names').value = store.get('names', '');
+$('tsize').value = store.get('tsize', 4);
+
+/* ---------- Idea wheel ---------- */
+const wI = new Wheel($('wheelI'));
+$('ideaList').value = store.get('ideas', DEFAULT_IDEAS.join('\n'));
+const syncIdeas = () => { store.set('ideas', $('ideaList').value); wI.set(lines($('ideaList').value)); $('spinI').disabled = !wI.items.length; };
+$('ideaList').addEventListener('input', syncIdeas);
+$('ideaReset').onclick = () => { $('ideaList').value = DEFAULT_IDEAS.join('\n'); $('resultI').innerHTML = ''; syncIdeas(); };
+$('spinI').onclick = async () => {
+  if (wI.busy) return;
+  $('spinI').disabled = true; $('resultI').innerHTML = '';
+  const idx = await wI.spin(), pick = wI.items[idx];
+  $('resultI').innerHTML = esc(pick); confetti();
+  if ($('removeIdea').checked) {
+    const l = lines($('ideaList').value); l.splice(idx, 1); $('ideaList').value = l.join('\n');
+  }
+  syncIdeas();
+};
+syncIdeas();
+
+/* ---------- Settings ---------- */
+const DEF = { pm: 5, ps: 0, qm: 2, qs: 0, auto: true, sound: true };
+let cfg = { ...DEF };
+try { Object.assign(cfg, JSON.parse(store.get('cfg', '{}'))); } catch {}
+const clampInt = (v, max) => Math.max(0, Math.min(max, Math.floor(+v) || 0));
+function fillSettings() {
+  $('pm').value = cfg.pm; $('ps').value = cfg.ps; $('qm').value = cfg.qm; $('qs').value = cfg.qs;
+  $('auto').checked = cfg.auto; $('sound').checked = cfg.sound;
+}
+$('openSettings').onclick = () => { fillSettings(); $('settings').showModal(); };
+$('setReset').onclick = () => { cfg = { ...DEF }; fillSettings(); };
+$('setSave').onclick = () => {
+  cfg = { pm: clampInt($('pm').value, 120), ps: clampInt($('ps').value, 59), qm: clampInt($('qm').value, 120), qs: clampInt($('qs').value, 59),
+    auto: $('auto').checked, sound: $('sound').checked };
+  store.set('cfg', JSON.stringify(cfg)); $('settings').close();
+  if (!T.running) { T.left = dur(T.phase); renderTimer(); }   // apply to a timer that hasn't started
+};
+$('settings').addEventListener('click', e => { if (e.target === $('settings')) $('settings').close(); });
+
+/* ---------- Presentation timer ---------- */
+const dur = ph => ph === 'present' ? (cfg.pm * 60 + cfg.ps) * 1000 : ph === 'qa' ? (cfg.qm * 60 + cfg.qs) * 1000 : 0;
+const T = { team: 0, phase: 'present', left: dur('present'), total: dur('present'), running: false, endAt: 0 };
+const PHASE_LABEL = { present: 'Presentation', qa: 'Questions', done: "Time's up" };
+let audio;
+function beep(n = 3) {
+  if (!cfg.sound) return;
+  try {
+    audio = audio || new AudioContext();
+    for (let i = 0; i < n; i++) {
+      const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + i * .35;
+      o.frequency.value = 880; o.connect(g); g.connect(audio.destination);
+      g.gain.setValueAtTime(.25, t); g.gain.exponentialRampToValueAtTime(.001, t + .25);
+      o.start(t); o.stop(t + .27);
+    }
+  } catch {}
+}
+const fmt = ms => { const s = Math.ceil(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+function setPhase(ph) { T.phase = ph; T.left = T.total = dur(ph); }
+function renderTimer() {
+  const name = teamNames[T.team] || 'Team';
+  $('tmTeam').textContent = name;
+  $('tmTeam').style.color = COLORS[T.team % COLORS.length];
+  $('tmMembers').textContent = (teams[T.team] || []).join(' · ');
+  $('tmPhase').textContent = PHASE_LABEL[T.phase];
+  const c = $('tmClock'), secs = T.left / 1000;
+  c.textContent = fmt(T.left);
+  c.className = 'tm-clock' + (T.phase === 'done' ? ' done' : T.running && secs <= 10 ? ' danger' : secs <= 30 && T.phase !== 'done' ? ' warn' : '');
+  $('tmBar').style.transform = `scaleX(${T.total ? T.left / T.total : 0})`;
+  $('tmStart').textContent = T.running ? 'Pause' : T.phase === 'done' ? 'Next team' : (T.left < T.total ? 'Resume' : 'Start');
+  document.title = T.running ? `${fmt(T.left)} · ${PHASE_LABEL[T.phase]}` : 'Revolute Spinner';
+}
+function refreshTimerTeams() {
+  const sel = $('tmSelect');
+  if (!teamNames.length) { sel.innerHTML = '<option>No teams yet</option>'; return; }
+  T.team = Math.min(T.team, teamNames.length - 1);
+  sel.innerHTML = teamNames.map((n, i) => `<option value="${i}">${esc(n)}</option>`).join('');
+  sel.value = T.team; renderTimer();
+}
+function startTimer() { if (T.phase === 'done') return; AudioContext && (audio = audio || new AudioContext()); T.running = true; T.endAt = performance.now() + T.left; renderTimer(); }
+function pauseTimer() { T.left = Math.max(0, T.endAt - performance.now()); T.running = false; renderTimer(); }
+function gotoTeam(i) {
+  if (!teamNames.length) return;
+  T.team = (i + teamNames.length) % teamNames.length; T.running = false; setPhase('present'); $('tmSelect').value = T.team; renderTimer();
+}
+function advancePhase() {  // end of presentation or Q&A
+  T.running = false;
+  if (T.phase === 'present') { setPhase('qa'); if (cfg.auto && T.total > 0) startTimer(); }
+  else setPhase('done');
+  renderTimer();
+}
+setInterval(() => {
+  if (!T.running) return;
+  T.left = Math.max(0, T.endAt - performance.now());
+  if (T.left <= 0) { beep(T.phase === 'present' ? 2 : 3); advancePhase(); } else renderTimer();
+}, 100);
+$('tmStart').onclick = () => { if (T.phase === 'done') gotoTeam(T.team + 1); else T.running ? pauseTimer() : startTimer(); };
+$('tmReset').onclick = () => { T.running = false; setPhase('present'); renderTimer(); };
+$('tmSkip').onclick = () => { if (T.phase !== 'done') advancePhase(); };
+$('tmPlus').onclick = () => { if (T.phase === 'done') return; T.total += 60000; if (T.running) T.endAt += 60000; else T.left += 60000; renderTimer(); };
+$('tmPrev').onclick = () => gotoTeam(T.team - 1);
+$('tmNext').onclick = () => gotoTeam(T.team + 1);
+$('tmSelect').onchange = () => gotoTeam(+$('tmSelect').value);
+$('tmFull').onclick = () => document.fullscreenElement ? document.exitFullscreen() : $('timercard').requestFullscreen?.();
+document.addEventListener('fullscreenchange', () => { $('tmFull').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen'; });
+document.addEventListener('keydown', e => {
+  if (!$('timer').classList.contains('on') || /INPUT|TEXTAREA|SELECT|BUTTON/.test(e.target.tagName) || $('settings').open) return;
+  if (e.code === 'Space') { e.preventDefault(); $('tmStart').click(); }
+  else if (e.code === 'ArrowRight') $('tmNext').click();
+  else if (e.code === 'ArrowLeft') $('tmPrev').click();
+});
+
+resetTeams();
+</script>
+</body>
+</html>
